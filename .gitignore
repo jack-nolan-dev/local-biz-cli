@@ -1,0 +1,36 @@
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Output
+output/
+demos/
+pipeline_results/
+
+# Credentials
+credentials.json
+token_*.json
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Templates (user-provided, not shipped)
+templates/
