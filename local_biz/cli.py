@@ -72,11 +72,10 @@ def find(query, location, limit, output, no_website_only):
 @click.argument("input_file", type=click.Path(exists=True))
 @click.option("--output", "-o", help="Output CSV (default: {input}_enriched.csv)")
 @click.option("--limit", "-n", type=int, help="Only process first N rows")
-@click.option("--search-owner", is_flag=True, help="Search for owner names (slower)")
-def enrich(input_file, output, limit, search_owner):
+def enrich(input_file, output, limit):
     """Enrich a leads CSV/JSON with emails and owner lookup URLs."""
     from . import emails as email_mod
-    from .enrichment import make_lookup_urls, search_owner as do_search_owner
+    from .enrichment import make_lookup_urls
     from .places import parse_address
 
     # Load input (JSON or CSV)
@@ -113,23 +112,14 @@ def enrich(input_file, output, limit, search_owner):
             if email:
                 click.echo(f" -- email: {email}", nl=False)
 
-        # Owner search
-        owner = ""
-        if search_owner:
-            owner_name, confidence, _ = do_search_owner(name, address)
-            if owner_name:
-                owner = owner_name
-                click.echo(f" -- owner: {owner}", nl=False)
-
         click.echo()
 
-        urls = make_lookup_urls(name, address, owner)
+        urls = make_lookup_urls(name, address)
         results.append({
             "name": name,
             "phone": phone,
             "address": address,
             "email": email or "",
-            "owner_name": owner,
             "website": website,
             "rating": row.get("rating", ""),
             "reviews": row.get("reviews", ""),
@@ -138,7 +128,7 @@ def enrich(input_file, output, limit, search_owner):
             "result": "",
         })
 
-    fields = ["name", "phone", "address", "email", "owner_name",
+    fields = ["name", "phone", "address", "email",
               "website", "rating", "reviews",
               "yelp_url", "google_owner_url", "linkedin_url",
               "called", "result"]

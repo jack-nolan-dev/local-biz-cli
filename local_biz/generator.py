@@ -1,7 +1,6 @@
 """Demo site generation: fill HTML templates with business data."""
 
 import json
-import os
 import re
 import shutil
 import urllib.parse
@@ -31,7 +30,9 @@ def generate(lead, template_name):
     biz_name = lead["name"]
     biz_short = _short_name(biz_name)
 
-    # Build replacement map
+    # Build replacement map -- uses only public business facts (name, address,
+    # phone) and user-supplied or AI-generated copy. No Google review text,
+    # reviewer names, or API-key-bearing image URLs are embedded.
     replacements = {
         "{{BUSINESS_NAME}}":       biz_name,
         "{{BUSINESS_NAME_SHORT}}": biz_short,
@@ -42,19 +43,19 @@ def generate(lead, template_name):
         "{{PHONE_DISPLAY}}":       lead.get("phone", ""),
         "{{PHONE_RAW}}":           phone_raw,
         "{{EMAIL}}":               lead.get("email", ""),
-        "{{RATING}}":              str(lead.get("rating", "4.8")),
-        "{{REVIEW_COUNT}}":        str(lead.get("reviews", "100")),
-        "{{STREETVIEW_IMG_TAG}}":  _streetview_tag(street, city, state, biz_name),
-        "{{MAP_IMG_TAG}}":         _map_tag(street, city, state),
+        "{{RATING}}":              str(lead.get("rating", "")),
+        "{{REVIEW_COUNT}}":        str(lead.get("reviews", "")),
         "{{MAPS_IFRAME}}":         _maps_iframe(street, city, state),
         "{{BOOKING_URL}}":         lead.get("booking_url", "#contact"),
         "{{SERVICE_AREA}}":        lead.get("service_area", f"{city} and surrounding area"),
-        "{{FOUNDED}}":             lead.get("founded", "2010"),
-        "{{YEARS}}":               lead.get("years", "15"),
-        "{{OWNER_NAME}}":          lead.get("owner_name", ""),
-        "{{OWNER_FIRST}}":         lead.get("owner_first", ""),
+        "{{FOUNDED}}":             lead.get("founded", ""),
+        "{{YEARS}}":               lead.get("years", ""),
+        "{{OWNER_NAME}}":          "",
+        "{{OWNER_FIRST}}":         "",
         "{{LICENSE}}":             lead.get("license", ""),
         "{{LOCATION_TAG}}":        f"{city}, {state}",
+        "{{STREETVIEW_IMG_TAG}}":  "",
+        "{{MAP_IMG_TAG}}":         "",
     }
 
     # Generate AI copy if API key is available, otherwise use defaults
@@ -111,15 +112,11 @@ def _generate_copy(lead, template_name):
         return _FALLBACK_COPY
 
     _, city, state, _ = parse_address(lead["address"])
-    review_snippets = " | ".join(
-        r["text"][:100] for r in lead.get("review_texts", [])[:2]
-    )
     rating = lead.get("rating", 4.8)
 
     prompt = (
         f'You are writing website copy for a local business called "{lead["name"]}" '
-        f'in {city}, {state}. It has a {rating} star Google rating.\n'
-        f'Real customer reviews say: {review_snippets or "highly rated, quality service"}\n\n'
+        f'in {city}, {state}. It has a {rating} star rating.\n\n'
         f'Write 4 short pieces of copy. Return ONLY valid JSON:\n'
         f'{{"hero_h1_line1": "4-6 word punchy opening line",\n'
         f' "hero_h1_line2": "3-5 word completing line",\n'
@@ -177,40 +174,8 @@ def _short_name(full_name):
     return words[0].rstrip("'s") if words else full_name.split()[0]
 
 
-def _streetview_tag(street, city, state, biz_name):
-    """Google Street View Static API image tag."""
-    try:
-        from .config import get_places_api_key
-        api_key = get_places_api_key()
-    except SystemExit:
-        return ""
-    location = urllib.parse.quote(f"{street}, {city}, {state}")
-    url = (
-        f"https://maps.googleapis.com/maps/api/streetview"
-        f"?size=600x400&location={location}&fov=90&pitch=0&key={api_key}"
-    )
-    safe = biz_name.replace('"', '&quot;')
-    return f'<img src="{url}" alt="{safe} storefront" class="streetview-photo" onerror="this.remove()">'
-
-
-def _map_tag(street, city, state):
-    """Google Static Maps API image tag."""
-    try:
-        from .config import get_places_api_key
-        api_key = get_places_api_key()
-    except SystemExit:
-        return ""
-    location = urllib.parse.quote(f"{street}, {city}, {state}")
-    url = (
-        f"https://maps.googleapis.com/maps/api/staticmap"
-        f"?center={location}&zoom=15&size=600x300&scale=2"
-        f"&markers=color:red%7C{location}&style=feature:poi%7Cvisibility:off&key={api_key}"
-    )
-    return f'<img src="{url}" alt="Map" class="location-map" onerror="this.remove()">'
-
-
 def _maps_iframe(street, city, state):
-    """Google Maps embed iframe."""
+    """Google Maps embed iframe (no API key required)."""
     query = urllib.parse.quote(f"{street}, {city}, {state}")
     return (
         f'<iframe src="https://maps.google.com/maps?q={query}&output=embed" '

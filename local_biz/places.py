@@ -16,9 +16,6 @@ FIELD_MASK = ",".join([
     "places.websiteUri",
     "places.rating",
     "places.userRatingCount",
-    "places.reviews",
-    "places.regularOpeningHours",
-    "places.photos",
 ])
 
 # National chains that won't respond to cold outreach
@@ -81,35 +78,13 @@ def search(query, location, limit=20):
     return results
 
 
-def get_photo_url(photo_name, max_width=800):
-    """Convert a Places API photo reference to a usable image URL."""
-    if not photo_name:
-        return ""
-    api_key = get_places_api_key()
-    return (
-        f"https://places.googleapis.com/v1/{photo_name}/media"
-        f"?maxWidthPx={max_width}&key={api_key}"
-    )
-
-
 def _normalize_place(place):
-    """Flatten a Places API response into a clean dict."""
-    photos = place.get("photos", [])
-    photo_urls = [
-        get_photo_url(p.get("name", ""), max_width=600)
-        for p in photos[:6]
-    ]
-    photo_urls = [u for u in photo_urls if u]
+    """Flatten a Places API response into a clean dict.
 
-    reviews = []
-    for r in place.get("reviews", [])[:3]:
-        text = r.get("text", {}).get("text", "").strip()
-        author = r.get("authorAttribution", {}).get("displayName", "").strip()
-        if text and author:
-            reviews.append({"text": text, "author": author})
-
-    hours = place.get("regularOpeningHours", {}).get("weekdayDescriptions", [])
-
+    Only exports business name, address, phone, website, rating, and
+    review count. Review text, photos, and hours are NOT exported to
+    comply with Google Maps Platform Terms of Service.
+    """
     return {
         "name": place.get("displayName", {}).get("text", "").strip(),
         "address": place.get("formattedAddress", ""),
@@ -117,9 +92,6 @@ def _normalize_place(place):
         "website": place.get("websiteUri", ""),
         "rating": place.get("rating", 0),
         "reviews": place.get("userRatingCount", 0),
-        "review_texts": reviews,
-        "photo_urls": photo_urls,
-        "hours": hours,
     }
 
 

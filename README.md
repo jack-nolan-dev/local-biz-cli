@@ -9,7 +9,7 @@ Built for web design agencies and freelancers doing cold outreach to local busin
 ```
 local-biz find         Search Google Places for businesses in a target area
      |
-local-biz enrich       Hunt for emails, owner names, and research URLs
+local-biz enrich       Scan business websites for emails + generate research URLs
      |
 local-biz generate     Fill an HTML template with real business data
      |
@@ -23,8 +23,8 @@ local_biz/
   cli.py            Click CLI with 4 subcommands
   config.py         .env loading, paths, settings
   places.py         Google Places API (New) -- search, scoring, address parsing
-  emails.py         Email extraction from websites + search engines
-  enrichment.py     Owner name lookup via DuckDuckGo, research URL generation
+  emails.py         Email extraction from business websites
+  enrichment.py     Research URL generation (Yelp, Google, LinkedIn)
   generator.py      Template-based demo site generation + AI copy via Claude API
   deployer.py       Vercel / Netlify deployment
   pipeline.py       Full orchestration with parallel email hunting
@@ -45,7 +45,7 @@ cp .env.example .env
 # Find leads
 local-biz find -q "plumbers" -l "Portland, ME" -n 10
 
-# Enrich a leads file with emails and owner lookup URLs
+# Enrich a leads file with emails and research URLs
 local-biz enrich leads.json -o cold_calls.csv
 
 # Generate a demo site from a template
@@ -122,12 +122,10 @@ Drop your HTML templates in `./templates/`. Each template is a directory with an
 | `{{ADDRESS}}` | Street address |
 | `{{PHONE_DISPLAY}}`, `{{PHONE_RAW}}` | Phone (formatted + digits only) |
 | `{{EMAIL}}` | Contact email |
-| `{{RATING}}`, `{{REVIEW_COUNT}}` | Google rating and review count |
 | `{{HERO_H1_LINE1}}`, `{{HERO_H1_LINE2}}` | AI-generated hero headline |
 | `{{HERO_SUBTEXT}}` | AI-generated subheadline |
 | `{{ABOUT_COPY}}` | AI-generated about section |
 | `{{MAPS_IFRAME}}` | Google Maps embed |
-| `{{STREETVIEW_IMG_TAG}}` | Street View image |
 
 If an `ANTHROPIC_API_KEY` is set, hero and about copy are generated per-business via Claude. Otherwise, sensible defaults are used.
 
@@ -150,6 +148,17 @@ All configuration is via environment variables (or `.env` file):
 | `LOCAL_BIZ_OUTPUT` | No | Output directory (default: `./output`) |
 | `LOCAL_BIZ_TEMPLATES` | No | Template directory (default: `./templates`) |
 
+## Legal disclaimer
+
+This tool is provided as-is for educational and portfolio purposes. Users are responsible for:
+
+- Complying with the [Google Maps Platform Terms of Service](https://cloud.google.com/maps-platform/terms) when using the Places API
+- Complying with [CAN-SPAM](https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business) and applicable laws when conducting outreach
+- Ensuring demo sites do not misrepresent affiliation with the businesses they feature
+- Obtaining appropriate consent before using real names or likenesses in commercial materials
+
+This tool discovers publicly available business information and generates demo websites from user-provided templates. It does not scrape search engines, and email discovery is limited to extracting contact info from the business's own website.
+
 ## License
 
-MIT
+MIT -- see [LICENSE](LICENSE).

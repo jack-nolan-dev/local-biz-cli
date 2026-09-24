@@ -1,7 +1,6 @@
-"""Email discovery: scrape business websites and search engines for contact emails."""
+"""Email discovery: extract contact emails from business websites."""
 
 import re
-import time
 import urllib.request
 import urllib.parse
 
@@ -84,23 +83,16 @@ def _fetch(url, timeout=8):
 
 
 def hunt(name, city, website=None):
-    """Hunt for a business email across multiple sources.
+    """Hunt for a business email by scraping their own website.
 
-    Tries: (1) their website, (2) Google search.
+    Checks the homepage and /contact page for email addresses.
     Returns (email, source) or (None, None).
     """
-    # 1. Scrape their website
     if website and "facebook.com" not in website and "yelp.com" not in website:
         emails = extract(_fetch(website))
         if not emails:
             emails = extract(_fetch(website.rstrip("/") + "/contact"))
         if emails:
             return emails[0], "website"
-
-    # 2. Google search fallback
-    q = urllib.parse.quote(f'"{name}" "{city}" email contact')
-    emails = extract(_fetch(f"https://www.google.com/search?q={q}&num=5"))
-    if emails:
-        return emails[0], "google"
 
     return None, None

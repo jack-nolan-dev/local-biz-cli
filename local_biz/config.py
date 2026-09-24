@@ -34,11 +34,8 @@ DEMOS_DIR = OUTPUT_DIR / "demos"
 RESULTS_DIR = OUTPUT_DIR / "results"
 TEMPLATES_DIR = Path(os.environ.get("LOCAL_BIZ_TEMPLATES", "./templates"))
 
-# HTTP headers for web scraping
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-)
+# HTTP headers for fetching business websites
+USER_AGENT = "local-biz-cli/0.1 (lead-research)"
 SCRAPE_HEADERS = {
     "User-Agent": USER_AGENT,
     "Accept-Language": "en-US,en;q=0.9",
